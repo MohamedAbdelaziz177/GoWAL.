@@ -138,6 +138,37 @@ func (kv *KVStore) Checkpoint(snapshotPath string) error {
 	return nil
 }
 
+func (kv *KVStore) CheckPointWithoutTruncating(snapshotPath string) error {
+
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+
+	file, err := os.Create(snapshotPath)
+
+	if err != nil {
+		return fmt.Errorf("failed to create snapshot: %w", err)
+	}
+
+	defer file.Close()
+
+	for k, v := range kv.data {
+
+		line := fmt.Sprintf("%s=%s\n", k, v)
+
+		_, err := file.WriteString(line)
+
+		if err != nil {
+			return fmt.Errorf("failed to write snapshot: %w", err)
+		}
+	}
+
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("failed to sync snapshot: %w", err)
+	}
+
+	return nil
+}
+
 func (kv *KVStore) Close() error {
 	return kv.wal.Close()
 }
