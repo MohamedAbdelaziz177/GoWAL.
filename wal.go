@@ -139,10 +139,10 @@ func (w *WAL) ReadEntries() ([]WalEntry, error) {
 	return entries, nil
 }
 
-func (w *WAL) Fsync() error {
+func (w *WAL) fsync() error {
 
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	// w.mu.Lock()
+	// defer w.mu.Unlock()     ------- if only used when Closing the Wal, maybe no need for locking --- they will lead to deadlock
 
 	if err := w.writer.Flush(); err != nil {
 		return fmt.Errorf("Failed to flush during force sync ")
@@ -178,7 +178,7 @@ func (w *WAL) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	if err := w.Fsync(); err != nil {
+	if err := w.fsync(); err != nil {
 		return fmt.Errorf("failed to sync data: %w", err)
 	}
 
